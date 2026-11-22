@@ -9,9 +9,56 @@
 :root{--navy:#082b45;--blue:#087ca5;--cyan:#16b8d4;--bg:#eef5f9;--ink:#153247;--muted:#718696;--line:#dce8ef;--green:#159b72;--orange:#ef9840;--red:#d95b5b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
-header{background:linear-gradient(120deg,#082b45,#087ca5);color:white;padding:23px 18px;border-radius:0 0 22px 22px}
-.brand{font-size:23px;font-weight:800}
-.sub{font-size:12px;opacity:.8;margin-top:5px}
+header{
+ background:linear-gradient(135deg,#082b45 0%,#087ca5 65%,#159b72 100%);
+ color:white;
+ padding:22px 18px;
+ border-radius:0 0 24px 24px;
+ box-shadow:0 5px 18px #082b4525;
+ position:relative;
+ overflow:hidden;
+}
+ .brand-row{
+ display:flex;
+ align-items:center;
+ gap:15px;
+ position:relative;
+ z-index:1;
+}
+
+.brand-mascot{
+ width:76px;
+ height:76px;
+ flex:0 0 76px;
+ border-radius:21px;
+ background:#ffffff16;
+ border:1px solid #ffffff30;
+ padding:5px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ overflow:hidden;
+}
+
+.brand-mascot img{
+ width:100%;
+ height:100%;
+ object-fit:contain;
+}
+.brand{
+ font-size:24px;
+ font-weight:900;
+ letter-spacing:1.2px;
+ color:#ffffff;
+ text-shadow:0 2px 5px #001a2b40;
+}
+.sub{
+ font-size:12px;
+ color:#d8edf5;
+ margin-top:4px;
+ letter-spacing:.3px;
+ line-height:1.4;
+}
 nav{display:flex;gap:7px;padding:14px}
 nav button{flex:1;border:0;border-radius:12px;padding:12px 5px;background:#dceaf1;color:#31566b;font-weight:bold}
 nav button.active{background:var(--blue);color:white}
