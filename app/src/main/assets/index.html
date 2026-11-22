@@ -602,6 +602,138 @@ function renderHome(){
   $('bar'+n).style.width=(Math.max(0,v)/max*100)+'%';
   $('chart'+n).textContent=money(v);
  });
+ renderMonthlyCharts();
+ }
+ // GRÁFICOS COMPARATIVOS DE LOS ÚLTIMOS 6 MESES
+function renderMonthlyCharts(){
+
+ const barContainer=$('monthlyBarChart');
+ const pieContainer=$('monthlyPieChart');
+
+ if(!barContainer || !pieContainer)return;
+
+ const now=new Date();
+ const months=[];
+
+ for(let i=5;i>=0;i--){
+  let d=new Date(now.getFullYear(),now.getMonth()-i,1);
+  let key=d.getFullYear()+'-'+
+   String(d.getMonth()+1).padStart(2,'0');
+
+  months.push({
+   key,
+   label:d.toLocaleDateString('es-UY',{month:'short'}),
+   data:sum(jobs.filter(j=>monthKey(j.date)===key))
+  });
+ }
+
+ const maxValue=Math.max(
+  1,
+  ...months.map(m=>Math.max(
+   m.data.income,
+   m.data.expenses,
+   Math.max(0,m.data.profit)
+  ))
+ );
+
+ barContainer.innerHTML=`
+  <div class="monthly-legend">
+   <div class="legend-item">
+    <span class="legend-dot" style="background:#087ca5"></span>Ingresos
+   </div>
+   <div class="legend-item">
+    <span class="legend-dot" style="background:#ed9140"></span>Gastos
+   </div>
+   <div class="legend-item">
+    <span class="legend-dot" style="background:#159b72"></span>Ganancia
+   </div>
+  </div>
+
+  <div class="monthly-chart">
+   ${months.map(m=>`
+    <div class="monthly-column">
+
+     <div class="monthly-value">${money(m.data.income)}</div>
+
+     <div class="monthly-bars">
+      <div class="monthly-bar income"
+       style="height:${Math.max(2,m.data.income/maxValue*100)}%"
+       title="Ingresos: ${money(m.data.income)}"></div>
+
+      <div class="monthly-bar expense"
+       style="height:${Math.max(2,m.data.expenses/maxValue*100)}%"
+       title="Gastos: ${money(m.data.expenses)}"></div>
+
+      <div class="monthly-bar profit"
+       style="height:${Math.max(2,Math.max(0,m.data.profit)/maxValue*100)}%"
+       title="Ganancia: ${money(m.data.profit)}"></div>
+     </div>
+
+     <div class="monthly-month">${m.label}</div>
+    </div>
+   `).join('')}
+  </div>
+ `;
+
+ const totalIncome=months.reduce((a,m)=>a+m.data.income,0);
+
+ if(totalIncome<=0){
+  pieContainer.innerHTML=
+   '<p class="note">Todavía no hay ingresos registrados en estos 6 meses.</p>';
+  return;
+ }
+
+ const colors=[
+  '#176D9B',
+  '#159B72',
+  '#D99448',
+  '#70518D',
+  '#C95D62',
+  '#579BC0'
+ ];
+
+ let angle=0;
+
+ const slices=months.map((m,i)=>{
+  let portion=m.data.income/totalIncome;
+  let start=angle;
+  angle+=portion*360;
+
+  return{
+   ...m,
+   portion,
+   start,
+   end:angle,
+   color:colors[i]
+  };
+ }).filter(m=>m.data.income>0);
+
+ const gradient=slices.map(s=>
+  `${s.color} ${s.start}deg ${s.end}deg`
+ ).join(',');
+
+ pieContainer.innerHTML=`
+  <div class="monthly-pie-wrap">
+
+   <div class="monthly-pie"
+    style="background:conic-gradient(${gradient})">
+   </div>
+
+   <div class="monthly-pie-legend">
+    ${slices.map(s=>`
+     <div class="monthly-pie-item">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      <span>
+       <b>${s.label}</b><br>
+       ${money(s.data.income)}<br>
+       ${(s.portion*100).toFixed(1)}%
+      </span>
+     </div>
+    `).join('')}
+   </div>
+
+  </div>
+ `;
  }
  
 function generateMonthlyReport(){
