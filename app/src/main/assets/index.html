@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#082b45">
+<title>FL Sanitaria</title>
+<style>
+:root{--navy:#082b45;--blue:#087ca5;--cyan:#16b8d4;--bg:#eef5f9;--ink:#153247;--muted:#718696;--line:#dce8ef;--green:#159b72;--orange:#ef9840;--red:#d95b5b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
+header{background:linear-gradient(120deg,#082b45,#087ca5);color:white;padding:23px 18px;border-radius:0 0 22px 22px}
+.brand{font-size:23px;font-weight:800}
+.sub{font-size:12px;opacity:.8;margin-top:5px}
+nav{display:flex;gap:7px;padding:14px}
+nav button{flex:1;border:0;border-radius:12px;padding:12px 5px;background:#dceaf1;color:#31566b;font-weight:bold}
+nav button.active{background:var(--blue);color:white}
+main{padding:0 14px 25px;max-width:760px;margin:auto}
+.panel{background:white;border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:13px;box-shadow:0 5px 18px #0b39500b}
+h2{font-size:17px;margin:0 0 14px}
+h3{font-size:14px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{padding:14px;border-radius:14px;background:#f1f7fa}
+.metric small{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}
+.metric strong{font-size:20px}
+.income{background:#e7f7f2}.expense{background:#fff2e8}.profit{background:#eaf3ff}.jobs{background:#f1efff}
+.chartrow{display:grid;grid-template-columns:75px 1fr 82px;gap:8px;align-items:center;margin:14px 0;font-size:12px}
+.track{height:13px;background:#edf2f5;border-radius:20px;overflow:hidden}
+.bar{height:100%;border-radius:20px;min-width:2px}
+.bar.income{background:linear-gradient(90deg,#087ca5,#16b8d4)}
+.bar.expense{background:linear-gradient(90deg,#ed9140,#ffc06e)}
+.bar.profit{background:linear-gradient(90deg,#159b72,#50c69e)}
+label{display:block;font-size:12px;color:#526d7d;margin:10px 0 5px}
+input,textarea,select{width:100%;padding:11px;border:1px solid #ccdae3;border-radius:10px;font:inherit;background:white;color:var(--ink)}
+textarea{min-height:70px;resize:vertical}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.btn{border:0;border-radius:11px;padding:12px 14px;font-weight:bold;background:var(--blue);color:white;cursor:pointer}
+.btn.secondary{background:#e7f0f5;color:#24516a}
+.btn.danger{background:#fff0ef;color:#b63c3c}
+.btn.green{background:var(--green)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.job{border:1px solid var(--line);border-radius:13px;padding:12px;margin:9px 0}
+.jobtop{display:flex;justify-content:space-between;gap:8px}
+.jobname{font-weight:bold}
+.muted{color:var(--muted);font-size:12px}
+.amount{font-weight:800;color:var(--blue);white-space:nowrap}
+.pill{display:inline-block;padding:5px 9px;border-radius:20px;font-size:11px;margin-top:7px;background:#eaf4f8;color:#286078}
+.pill.green{background:#e4f7ef;color:#14815f}
+.pill.orange{background:#fff1e4;color:#b56b1c}
+.pill.red{background:#fff0ef;color:#b63c3c}
+.monthline{display:flex;gap:10px;align-items:center}
+.monthline select{flex:1}
+.note{font-size:11px;color:var(--muted);line-height:1.5}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+@media(max-width:420px){.formgrid{grid-template-columns:1fr}.metric strong{font-size:18px}.chartrow{grid-template-columns:68px 1fr 76px}}
+@media print{header,nav,.no-print{display:none!important}body{background:white}main{padding:0}.panel{box-shadow:none}.receipt{display:block!important}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand">FL SANITARIA</div>
+ <div class="sub">Gestión de trabajos, herramientas y finanzas</div>
+</header>
+
+<nav>
+ <button id="tabHome" class="active" onclick="showTab('home')">Inicio</button>
+ <button id="tabJobs" onclick="showTab('jobs')">Trabajos</button>
+ <button id="tabTools" onclick="showTab('tools')">Herramientas</button>
+</nav>
+
+<main>
+<!-- INICIO -->
+<section id="home">
+ <div class="panel">
+  <h2>Resumen del mes actual</h2>
+  <div class="grid">
+   <div class="metric income"><small>INGRESOS</small><strong id="homeIncome">$ 0</strong></div>
+   <div class="metric expense"><small>GASTOS</small><strong id="homeExpenses">$ 0</strong></div>
+   <div class="metric profit"><small>GANANCIA NETA</small><strong id="homeProfit">$ 0</strong></div>
+   <div class="metric jobs"><small>TRABAJOS REALIZADOS</small><strong id="homeCount">0</strong></div>
+  </div>
+ </div>
+ <div class="panel">
+  <h2>Finanzas del mes</h2>
+  <div class="chartrow"><span>Ingresos</span><div class="track"><div id="barIncome" class="bar income"></div></div><b id="chartIncome">$ 0</b></div>
+  <div class="chartrow"><span>Gastos</span><div class="track"><div id="barExpenses" class="bar expense"></div></div><b id="chartExpenses">$ 0</b></div>
+  <div class="chartrow"><span>Ganancia</span><div class="track"><div id="barProfit" class="bar profit"></div></div><b id="chartProfit">$ 0</b></div>
+  <p class="note">Gráfico correspondiente al mes calendario actual.</p>
+ </div>
+ <div class="panel">
+  <h2>Estado de cobros</h2>
+  <div class="grid">
+   <div class="metric income"><small>COBRADOS</small><strong id="homePaid">0</strong></div>
+   <div class="metric expense"><small>PENDIENTES</small><strong id="homePending">0</strong></div>
+  </div>
+ </div>
+ <div class="panel">
+  <h2>Accesos rápidos</h2>
+  <div class="actions">
+   <button class="btn" onclick="showTab('jobs');$('jobForm').scrollIntoView({behavior:'smooth'})">＋ Nuevo trabajo</button>
+   <button class="btn secondary" onclick="showTab('tools');$('toolForm').scrollIntoView({behavior:'smooth'})">＋ Nueva herramienta</button>
+  </div>
+ </div>
+</section>
+
+<!-- TRABAJOS -->
+<section id="jobs" class="hidden">
+ <div class="panel no-print">
+  <h2>Registrar trabajo</h2>
+  <form id="jobForm">
+   <input type="hidden" id="editNum">
+   <div class="formgrid">
+    <div><label>Fecha</label><input id="date" type="date" required></div>
+    <div><label>Cliente</label><input id="client" placeholder="Nombre del cliente"></div>
+    <div><label>Dirección</label><input id="address" placeholder="Dirección"></div>
+    <div><label>Ingreso total ($)</label><input id="income" type="number" min="0" required></div>
+    <div><label>Materiales ($)</label><input id="materials" type="number" min="0" value="0"></div>
+    <div><label>Transporte ($)</label><input id="transport" type="number" min="0" value="0"></div>
+    <div><label>Otros gastos ($)</label><input id="other" type="number" min="0" value="0"></div>
+    <div><label>Mano de obra (informativo)</label><input id="labor" type="number" min="0" value="0"></div>
+    <div><label>Estado de cobro</label>
+     <select id="status"><option value="Pendiente">Pendiente</option><option value="Cobrado">Cobrado</option></select>
+    </div>
+   </div>
+   <label>Descripción del trabajo</label>
+   <textarea id="description" placeholder="Detalle del trabajo realizado"></textarea>
+   <div class="actions">
+    <button class="btn" type="submit" id="saveBtn">Guardar trabajo</button>
+    <button class="btn secondary" type="button" onclick="resetJobForm()">Limpiar</button>
+   </div>
+  </form>
+ </div>
+
+ <div class="panel">
+  <h2>Resumen e historial mensual</h2>
+  <div class="monthline no-print">
+   <label for="month" style="margin:0">Mes:</label>
+   <select id="month" onchange="renderJobs()"></select>
+  </div>
+  <div class="grid" style="margin-top:12px">
+   <div class="metric income"><small>INGRESOS</small><strong id="monthIncome">$ 0</strong></div>
+   <div class="metric expense"><small>GASTOS</small><strong id="monthExpenses">$ 0</strong></div>
+   <div class="metric profit"><small>GANANCIA NETA</small><strong id="monthProfit">$ 0</strong></div>
+   <div class="metric jobs"><small>TRABAJOS</small><strong id="monthCount">0</strong></div>
+   <div class="metric income"><small>COBRADOS</small><strong id="monthPaid">0</strong></div>
+   <div class="metric expense"><small>PENDIENTES</small><strong id="monthPending">0</strong></div>
+  </div>
+  <label class="no-print">Filtrar trabajos</label>
+  <select id="jobFilter" class="no-print" onchange="renderJobs()">
+   <option value="Todos">Todos</option>
+   <option value="Cobrado">Cobrado</option>
+   <option value="Pendiente">Pendiente</option>
+  </select>
+  <div id="history"></div>
+ </div>
+
+ <div class="panel no-print">
+  <h3>Comprobantes y datos</h3>
+  <div class="actions">
+   <button class="btn secondary" onclick="exportCSV()">Exportar CSV</button>
+   <button class="btn secondary" onclick="backup()">Copia JSON</button>
+   <label class="btn secondary" style="display:inline-flex;align-items:center;cursor:pointer">Restaurar JSON<input type="file" accept=".json,application/json" onchange="restore(event)" style="display:none"></label>
+  </div>
+  <p class="note">La copia incluye trabajos y herramientas. Guardá el archivo en un lugar seguro.</p>
+ </div>
+</section>
+
+<!-- HERRAMIENTAS -->
+<section id="tools" class="hidden">
+ <div class="panel">
+  <h2>Registrar herramienta</h2>
+  <form id="toolForm">
+   <input type="hidden" id="editTool">
+   <label>Nombre de la herramienta</label>
+   <input id="toolName" required placeholder="Ej. Termofusora">
+   <label>Precio pagado ($)</label>
+   <input id="toolPrice" type="number" min="0" required>
+   <label>Estado</label>
+   <select id="toolStatus">
+    <option value="Activa">Activa</option>
+    <option value="Vida útil culminada">Vida útil culminada</option>
+   </select>
+   <div class="actions">
+    <button class="btn" type="submit" id="toolSave">Guardar herramienta</button>
+    <button class="btn secondary" type="button" onclick="resetToolForm()">Limpiar</button>
+   </div>
+  </form>
+ </div>
+ <div class="panel">
+  <h2>Mis herramientas</h2>
+  <div class="grid">
+   <div class="metric income"><small>HERRAMIENTAS ACTIVAS</small><strong id="activeTools">0</strong></div>
+   <div class="metric expense"><small>VIDA ÚTIL CULMINADA</small><strong id="expiredTools">0</strong></div>
+  </div>
+  <div id="toolHistory"></div>
+ </div>
+</section>
+</main>
+<div id="printArea" class="receipt hidden"></div>
+
+<script>
+const KEY='flsanitaria.jobs.v1';
+const TOOLS_KEY='flsanitaria.tools.v1';
+let jobs=[],tools=[];
+try{jobs=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(jobs))jobs=[]}catch(e){jobs=[]}
+try{tools=JSON.parse(localStorage.getItem(TOOLS_KEY)||'[]');if(!Array.isArray(tools))tools=[]}catch(e){tools=[]}
+
+const $=id=>document.getElementById(id);
+const money=n=>'$ '+Math.round(Number(n)||0).toLocaleString('es-UY');
+const val=id=>Number($(id).value)||0;
+const costs=j=>(Number(j.materials)||0)+(Number(j.transport)||0)+(Number(j.other)||0);
+const net=j=>(Number(j.income)||0)-costs(j);
+const today=()=>{let d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+function saveJobs(){localStorage.setItem(KEY,JSON.stringify(jobs))}
+function saveTools(){localStorage.setItem(TOOLS_KEY,JSON.stringify(tools))}
+function showTab(t){
+ ['home','jobs','tools'].forEach(x=>$(x).classList.toggle('hidden',x!==t));
+ ['Home','Jobs','Tools'].forEach(x=>$('tab'+x).classList.toggle('active',x.toLowerCase()===t));
+ if(t==='home')renderHome();
+ if(t==='jobs')renderJobs();
+ if(t==='tools')renderTools();
+}
+function monthKey(d){return (d||'').slice(0,7)}
+function monthLabel(k){
+ if(!k)return 'Sin fecha';
+ let [y,m]=k.split('-');
+ return new Date(Number(y),Number(m)-1,1).toLocaleDateString('es-UY',{month:'long',year:'numeric'});
+}
+function sum(list){
+ return list.reduce((a,j)=>({
+ income:a.income+(Number(j.income)||0),
+ expenses:a.expenses+costs(j),
+ profit:a.profit+net(j)
+ }),{income:0,expenses:0,profit:0});
+}
+function renderHome(){
+ let k=today().slice(0,7);
+ let list=jobs.filter(j=>monthKey(j.date)===k);
+ let s=sum(list);
+ let max=Math.max(s.income,s.expenses,Math.max(0,s.profit),1);
+ $('homeIncome').textContent=money(s.income);
+ $('homeExpenses').textContent=money(s.expenses);
+ $('homeProfit').textContent=money(s.profit);
+ $('homeCount').textContent=list.length;
+ let paid=list.filter(j=>j.status==='Cobrado').length;
+ $('homePaid').textContent=paid;
+ $('homePending').textContent=list.length-paid;
+ [['Income',s.income],['Expenses',s.expenses],['Profit',Math.max(0,s.profit)]].forEach(([n,v])=>{
+  $('bar'+n).style.width=(Math.max(0,v)/max*100)+'%';
+  $('chart'+n).textContent=money(v);
+ });
+}
+function fillMonths(){
+ let keys=[...new Set(jobs.map(j=>monthKey(j.date)).filter(Boolean))].sort().reverse();
+ let current=today().slice(0,7);
+ if(!keys.includes(current))keys.unshift(current);
+ let old=$('month').value;
+ $('month').innerHTML=keys.map(k=>`<option value="${k}">${monthLabel(k)}</option>`).join('');
+ $('month').value=keys.includes(old)?old:current;
+}
+function esc(v){
+ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function renderJobs(){
+ fillMonths();
+ let k=$('month').value;
+ let list=jobs.filter(j=>monthKey(j.date)===k);
+ let s=sum(list);
+ $('monthIncome').textContent=money(s.income);
+ $('monthExpenses').textContent=money(s.expenses);
+ $('monthProfit').textContent=money(s.profit);
+ $('monthCount').textContent=list.length;
+ $('monthPaid').textContent=list.filter(j=>j.status==='Cobrado').length;
+ $('monthPending').textContent=list.filter(j=>j.status!=='Cobrado').length;
+ let filter=$('jobFilter').value;
+ if(filter!=='Todos')list=list.filter(j=>(j.status||'Pendiente')===filter);
+ list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ $('history').innerHTML=list.length?list.map(j=>`
+ <div class="job">
+  <div class="jobtop">
+   <div><div class="jobname">${esc(j.client||'Cliente no especificado')}</div>
+   <div class="muted">${esc(j.date||'')} · ${esc(j.address||'')}</div></div>
+   <div class="amount">${money(j.income)}</div>
+  </div>
+  <div style="margin-top:7px;font-size:13px">${esc(j.description||'Sin descripción')}</div>
+  <div class="muted" style="margin-top:7px">Materiales: ${money(j.materials)} · Transporte: ${money(j.transport)} · Otros: ${money(j.other)}</div>
+  <div class="pill">Gastos: ${money(costs(j))} · Ganancia neta: ${money(net(j))}</div>
+  <div><span class="pill ${j.status==='Cobrado'?'green':'orange'}">${j.status==='Cobrado'?'Cobrado':'Pendiente'}</span></div>
+  <div class="actions no-print">
+   <button class="btn secondary" onclick="changeStatus('${j.num}')">Cambiar cobro</button>
+   <button class="btn secondary" onclick="receipt('${j.num}','detail')">Comprobante detallado</button>
+   <button class="btn secondary" onclick="receipt('${j.num}','total')">Comprobante total</button>
+   <button class="btn secondary" onclick="editJob('${j.num}')">Editar</button>
+   <button class="btn danger" onclick="deleteJob('${j.num}')">Eliminar</button>
+  </div>
+ </div>`).join(''):'<p class="muted">No hay trabajos en este mes.</p>';
+ renderHome();
+}
+function resetJobForm(){
+ $('jobForm').reset();$('editNum').value='';
+ $('date').value=today();$('materials').value=0;
+ $('transport').value=0;$('other').value=0;$('labor').value=0;
+ $('status').value='Pendiente';$('saveBtn').textContent='Guardar trabajo';
+}
+$('jobForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ let num=$('editNum').value||String(Date.now());
+ let previous=jobs.find(x=>String(x.num)===String(num));
+ let j={
+ num,date:$('date').value,client:$('client').value.trim(),
+ address:$('address').value.trim(),description:$('description').value.trim(),
+ income:val('income'),materials:val('materials'),transport:val('transport'),
+ other:val('other'),labor:val('labor'),status:$('status').value
+ };
+ let i=jobs.findIndex(x=>String(x.num)===String(num));
+ if(i>=0)jobs[i]=j;else jobs.push(j);
+ saveJobs();resetJobForm();renderJobs();
+ alert('Trabajo guardado correctamente.');
+});
+function editJob(num){
+ let j=jobs.find(x=>String(x.num)===String(num));if(!j)return;
+ ['date','client','address','income','materials','transport','other','labor','description'].forEach(k=>$(k).value=j[k]??'');
+ $('status').value=j.status||'Pendiente';
+ $('editNum').value=j.num;$('saveBtn').textContent='Guardar cambios';
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function changeStatus(num){
+ let j=jobs.find(x=>String(x.num)===String(num));if(!j)return;
+ j.status=j.status==='Cobrado'?'Pendiente':'Cobrado';
+ saveJobs();renderJobs();
+}
+function deleteJob(num){
+ if(!confirm('¿Eliminar este trabajo?'))return;
+ jobs=jobs.filter(j=>String(j.num)!==String(num));
+ saveJobs();renderJobs();
+}
+function receipt(num,type){
+ let j=jobs.find(x=>String(x.num)===String(num));if(!j)return;
+ let details=type==='detail'?`
+ <p>Materiales: ${money(j.materials)}</p>
+ <p>Transporte: ${money(j.transport)}</p>
+ <p>Otros gastos: ${money(j.other)}</p>`:'';
+ $('printArea').innerHTML=`<div style="font-family:Arial;padding:22px;color:#123">
+ <h2>FL SANITARIA</h2><h3>Comprobante de trabajo</h3>
+ <p><b>Fecha:</b> ${esc(j.date)}</p>
+ <p><b>Cliente:</b> ${esc(j.client||'')}</p>
+ <p><b>Dirección:</b> ${esc(j.address||'')}</p>
+ <p><b>Descripción:</b> ${esc(j.description||'')}</p>
+ ${details}<hr><h2>Total: ${money(j.income)}</h2></div>`;
+ $('printArea').classList.remove('hidden');
+ window.print();
+ $('printArea').classList.add('hidden');
+}
+
+// HERRAMIENTAS
+function resetToolForm(){
+ $('toolForm').reset();$('editTool').value='';
+ $('toolStatus').value='Activa';$('toolSave').textContent='Guardar herramienta';
+}
+$('toolForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ let id=$('editTool').value||String(Date.now());
+ let t={id,name:$('toolName').value.trim(),price:val('toolPrice'),status:$('toolStatus').value};
+ let i=tools.findIndex(x=>String(x.id)===String(id));
+ if(i>=0)tools[i]=t;else tools.push(t);
+ saveTools();resetToolForm();renderTools();
+ alert('Herramienta guardada correctamente.');
+});
+function renderTools(){
+ $('activeTools').textContent=tools.filter(t=>t.status==='Activa').length;
+ $('expiredTools').textContent=tools.filter(t=>t.status!=='Activa').length;
+ $('toolHistory').innerHTML=tools.length?tools.slice().reverse().map(t=>`
+ <div class="job">
+  <div class="jobtop"><div class="jobname">${esc(t.name)}</div><div class="amount">${money(t.price)}</div></div>
+  <span class="pill ${t.status==='Activa'?'green':'red'}">${esc(t.status)}</span>
+  <div class="actions">
+   <button class="btn secondary" onclick="toggleTool('${t.id}')">Cambiar estado</button>
+   <button class="btn secondary" onclick="editTool('${t.id}')">Editar</button>
+   <button class="btn danger" onclick="deleteTool('${t.id}')">Eliminar</button>
+  </div>
+ </div>`).join(''):'<p class="muted">Todavía no registraste herramientas.</p>';
+}
+function editTool(id){
+ let t=tools.find(x=>String(x.id)===String(id));if(!t)return;
+ $('toolName').value=t.name;$('toolPrice').value=t.price;
+ $('toolStatus').value=t.status;$('editTool').value=t.id;
+ $('toolSave').textContent='Guardar cambios';
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleTool(id){
+ let t=tools.find(x=>String(x.id)===String(id));if(!t)return;
+ t.status=t.status==='Activa'?'Vida útil culminada':'Activa';
+ saveTools();renderTools();
+}
+function deleteTool(id){
+ if(!confirm('¿Eliminar esta herramienta?'))return;
+ tools=tools.filter(t=>String(t.id)!==String(id));
+ saveTools();renderTools();
+}
+
+// EXPORTAR Y RESPALDAR
+function download(content,name,type){
+ let a=document.createElement('a');
+ let u=URL.createObjectURL(new Blob([content],{type}));
+ a.href=u;a.download=name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(u),1000);
+}
+function exportCSV(){
+ let rows=[
+ ['Fecha','Cliente','Direccion','Descripcion','Ingreso','Materiales','Transporte','Otros','Mano de obra','Gastos','Ganancia neta','Estado'],
+ ...jobs.map(j=>[j.date,j.client,j.address,j.description,j.income,j.materials,j.transport,j.other,j.labor,costs(j),net(j),j.status||'Pendiente'])
+ ];
+ let csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+ download('\ufeff'+csv,'FL_Sanitaria_trabajos.csv','text/csv;charset=utf-8');
+}
+  function backup(){
+ const data={
+  app:'FL Sanitaria',
+  vers
