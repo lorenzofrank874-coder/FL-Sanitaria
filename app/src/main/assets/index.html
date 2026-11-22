@@ -323,7 +323,19 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
     <div><label>Cliente</label><input id="client" placeholder="Nombre del cliente"></div>
     <div><label>Dirección</label><input id="address" placeholder="Dirección"></div>
     <div><label>Ingreso total ($)</label><input id="income" type="number" min="0" required></div>
-    <div><label>Materiales ($)</label><input id="materials" type="number" min="0" value="0"></div>
+    
+<div style="grid-column:1/-1">
+ <label>Materiales utilizados</label>
+ <div id="materialsList"></div>
+ <button class="btn secondary" type="button" onclick="addMaterial()">
+  ＋ Agregar material
+ </button>
+ <div class="metric expense" style="margin-top:10px">
+  <small>TOTAL DE MATERIALES</small>
+  <strong id="materialsTotal">$ 0</strong>
+ </div>
+</div>
+    
     <div><label>Transporte ($)</label><input id="transport" type="number" min="0" value="0"></div>
     <div><label>Otros gastos ($)</label><input id="other" type="number" min="0" value="0"></div>
     <div><label>Mano de obra (informativo)</label><input id="labor" type="number" min="0" value="0"></div>
@@ -415,6 +427,84 @@ try{jobs=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(jobs))job
 try{tools=JSON.parse(localStorage.getItem(TOOLS_KEY)||'[]');if(!Array.isArray(tools))tools=[]}catch(e){tools=[]}
 
 const $=id=>document.getElementById(id);
+ 
+let currentMaterials=[];
+
+function addMaterial(data={}){
+ const item={
+  id:data.id||String(Date.now()+Math.random()),
+  name:data.name||'',
+  quantity:Number(data.quantity)||1,
+  price:Number(data.price)||0
+ };
+
+ currentMaterials.push(item);
+ renderMaterials();
+}
+
+function renderMaterials(){
+ const container=$('materialsList');
+
+ container.innerHTML=currentMaterials.map(m=>`
+  <div class="job" style="background:#f8fbfd">
+   <label>Descripción del material</label>
+   <input value="${esc(m.name)}"
+    onchange="updateMaterial('${m.id}','name',this.value)"
+    placeholder="Ej. Codo de 40 mm">
+
+   <div class="formgrid">
+    <div>
+     <label>Cantidad</label>
+     <input type="number" min="0.01" step="any"
+      value="${m.quantity}"
+      onchange="updateMaterial('${m.id}','quantity',this.value)">
+    </div>
+    <div>
+     <label>Precio unitario ($)</label>
+     <input type="number" min="0" step="any"
+      value="${m.price}"
+      onchange="updateMaterial('${m.id}','price',this.value)">
+    </div>
+   </div>
+
+   <div class="jobtop" style="margin-top:10px">
+    <b>Subtotal</b>
+    <b class="amount">${money(m.quantity*m.price)}</b>
+   </div>
+
+   <div class="actions">
+    <button type="button" class="btn danger"
+     onclick="removeMaterial('${m.id}')">
+     Eliminar material
+    </button>
+   </div>
+  </div>
+ `).join('');
+
+ const total=currentMaterials.reduce(
+  (a,m)=>a+(m.quantity*m.price),0
+ );
+
+ $('materialsTotal').textContent=money(total);
+ $('materials').value=total;
+}
+
+function updateMaterial(id,field,value){
+ const m=currentMaterials.find(x=>x.id===id);
+ if(!m)return;
+
+ if(field==='name')m.name=value;
+ if(field==='quantity')m.quantity=Math.max(0,Number(value)||0);
+ if(field==='price')m.price=Math.max(0,Number(value)||0);
+
+ renderMaterials();
+}
+
+function removeMaterial(id){
+ currentMaterials=currentMaterials.filter(m=>m.id!==id);
+ renderMaterials();
+ }
+ 
 const money=n=>'$ '+Math.round(Number(n)||0).toLocaleString('es-UY');
 const val=id=>Number($(id).value)||0;
 const costs=j=>(Number(j.materials)||0)+(Number(j.transport)||0)+(Number(j.other)||0);
