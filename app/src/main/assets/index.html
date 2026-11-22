@@ -115,9 +115,107 @@ textarea{min-height:70px;resize:vertical}
 hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 @media(max-width:420px){.formgrid{grid-template-columns:1fr}.metric strong{font-size:18px}.chartrow{grid-template-columns:68px 1fr 76px}}
 @media print{header,nav,.no-print{display:none!important}body{background:white}main{padding:0}.panel{box-shadow:none}.receipt{display:block!important}}
+/* PANTALLA DE BIENVENIDA */
+#splash{
+ position:fixed;
+ inset:0;
+ z-index:9999;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ padding:25px;
+ text-align:center;
+ color:white;
+ background:
+ radial-gradient(circle at 50% 38%,#356b83 0%,transparent 42%),
+ linear-gradient(145deg,#142b40 0%,#176D9B 58%,#70518D 100%);
+ opacity:1;
+ transition:opacity .55s ease;
+}
+
+#splash.hide{
+ opacity:0;
+ pointer-events:none;
+}
+
+.splash-logo{
+ width:190px;
+ height:190px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ margin-bottom:25px;
+ border-radius:42px;
+ background:#ffffff16;
+ border:1px solid #ffffff40;
+ box-shadow:0 12px 40px #00152555;
+ animation:splashAppear .8s ease both;
+}
+
+.splash-logo img{
+ width:100%;
+ height:100%;
+ object-fit:contain;
+ padding:12px;
+}
+
+.splash-title{
+ font-size:30px;
+ font-weight:900;
+ letter-spacing:2px;
+ text-shadow:0 3px 12px #00152580;
+}
+
+.splash-name{
+ font-size:16px;
+ font-weight:600;
+ margin-top:12px;
+ color:#e5f2f8;
+}
+
+.splash-message{
+ font-size:12px;
+ margin-top:13px;
+ color:#d2e5ef;
+ letter-spacing:.4px;
+}
+
+.splash-line{
+ width:55px;
+ height:3px;
+ border-radius:5px;
+ margin-top:25px;
+ background:linear-gradient(90deg,#55aa8c,#b49acb);
+}
+
+@keyframes splashAppear{
+ from{opacity:0;transform:translateY(18px) scale(.92)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+ }
 </style>
 </head>
 <body>
+
+<div id="splash">
+ <div class="splash-logo">
+  <img src="file_000000000ec0820ea235d79af76f5e12.png"
+       alt="Mascota FL Sanitaria">
+ </div>
+
+ <div class="splash-title">FL SANITARIA</div>
+
+ <div class="splash-name">
+  Frank Lorenzo Lorenzo Cruz
+ </div>
+
+ <div class="splash-message">
+  Soluciones sanitarias con compromiso y profesionalismo
+ </div>
+
+ <div class="splash-line"></div>
+</div>
+
 <header>
  <div class="brand-row">
   <div class="brand-mascot">
@@ -701,6 +799,17 @@ renderHome();
 fillMonths();
 renderJobs();
 renderTools();
+
+// BIENVENIDA FL SANITARIA
+setTimeout(()=>{
+ const splash=$('splash');
+ splash.classList.add('hide');
+
+ setTimeout(()=>{
+  splash.remove();
+ },600);
+
+},3000);
 
 </script>
 </body>
