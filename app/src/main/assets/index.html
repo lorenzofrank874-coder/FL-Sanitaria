@@ -90,7 +90,137 @@ h3{font-size:14px;margin:0 0 10px}
 .bar.income{background:linear-gradient(90deg,#087ca5,#16b8d4)}
 .bar.expense{background:linear-gradient(90deg,#ed9140,#ffc06e)}
 .bar.profit{background:linear-gradient(90deg,#159b72,#50c69e)}
-label{display:block;font-size:12px;color:#526d7d;margin:10px 0 5px}
+ /* GRÁFICOS COMPARATIVOS MENSUALES */
+.monthly-chart{
+ display:flex;
+ align-items:flex-end;
+ justify-content:space-around;
+ gap:8px;
+ height:230px;
+ padding:15px 5px 0;
+ border-bottom:1px solid var(--line);
+ overflow-x:auto;
+}
+
+.monthly-column{
+ flex:1;
+ min-width:42px;
+ max-width:70px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:flex-end;
+ height:100%;
+}
+
+.monthly-bars{
+ width:100%;
+ height:175px;
+ display:flex;
+ align-items:flex-end;
+ justify-content:center;
+ gap:3px;
+}
+
+.monthly-bar{
+ width:28%;
+ min-width:7px;
+ border-radius:5px 5px 0 0;
+ min-height:2px;
+}
+
+.monthly-bar.income{
+ background:linear-gradient(180deg,#16b8d4,#087ca5);
+}
+
+.monthly-bar.expense{
+ background:linear-gradient(180deg,#ffc06e,#ed9140);
+}
+
+.monthly-bar.profit{
+ background:linear-gradient(180deg,#50c69e,#159b72);
+}
+
+.monthly-month{
+ font-size:10px;
+ text-align:center;
+ margin-top:8px;
+ color:var(--muted);
+ white-space:nowrap;
+}
+
+.monthly-value{
+ font-size:9px;
+ color:var(--ink);
+ text-align:center;
+ margin-bottom:4px;
+ word-break:break-word;
+}
+
+.monthly-legend{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:12px;
+ margin:12px 0;
+ font-size:11px;
+}
+
+.legend-item{
+ display:flex;
+ align-items:center;
+ gap:5px;
+}
+
+.legend-dot{
+ width:11px;
+ height:11px;
+ border-radius:3px;
+ flex:0 0 11px;
+}
+
+.monthly-pie-wrap{
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ gap:15px;
+ padding:10px 0;
+}
+
+.monthly-pie{
+ width:190px;
+ height:190px;
+ border-radius:50%;
+}
+
+.monthly-pie-legend{
+ width:100%;
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+}
+
+.monthly-pie-item{
+ display:flex;
+ align-items:flex-start;
+ gap:7px;
+ font-size:11px;
+ min-width:0;
+}
+
+.monthly-pie-item span:last-child{
+ word-break:break-word;
+}
+
+@media(max-width:420px){
+ .monthly-chart{gap:4px;padding-left:0;padding-right:0}
+ .monthly-column{min-width:38px}
+ .monthly-bars{gap:2px}
+ .monthly-month{font-size:9px}
+ .monthly-pie{width:170px;height:170px}
+ .monthly-pie-legend{grid-template-columns:1fr}
+ }
+ label{display:block;font-size:12px;color:#526d7d;margin:10px 0 5px}
 input,textarea,select{width:100%;padding:11px;border:1px solid #ccdae3;border-radius:10px;font:inherit;background:white;color:var(--ink)}
 textarea{min-height:70px;resize:vertical}
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
@@ -736,9 +866,6 @@ function renderMonthlyCharts(){
  `;
  }
  
-function generateMonthlyReport(){
- let k=$('homeMonth').value;
-
 function generateMonthlyReport(){
  let k=$('homeMonth').value;
  let list=jobs.filter(j=>monthKey(j.date)===k);
