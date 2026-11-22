@@ -6,7 +6,20 @@
 <meta name="theme-color" content="#082b45">
 <title>FL Sanitaria</title>
 <style>
-:root{--navy:#082b45;--blue:#087ca5;--cyan:#16b8d4;--bg:#eef5f9;--ink:#153247;--muted:#718696;--line:#dce8ef;--green:#159b72;--orange:#ef9840;--red:#d95b5b}
+:root{
+--navy:#203548;
+--blue:#176D9B;
+--cyan:#579BC0;
+--bg:#F1F5F8;
+--ink:#203548;
+--muted:#748494;
+--line:#DCE5EB;
+--green:#176B55;
+--purple:#70518D;
+--orange:#D99448;
+--red:#C95D62;
+}
+ 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
 header{
@@ -495,18 +508,18 @@ function restore(event){
    const data=JSON.parse(reader.result);
 
    if(
-    data.app!=='FL Sanitaria' ||
-    !Array.isArray(data.jobs) ||
-    !Array.isArray(data.tools)
-   ){
+ data.app!=='FL Sanitaria' ||
+ !Array.isArray(data.jobs)
+){
     throw new Error('Archivo de respaldo no válido');
    }
 
    if(!confirm('¿Restaurar los datos? Se reemplazarán los registros actuales.'))return;
 
    jobs=data.jobs;
-   tools=data.tools;
-
+if(Array.isArray(data.tools)){
+ tools=data.tools;
+ }
    saveJobs();
    saveTools();
 
