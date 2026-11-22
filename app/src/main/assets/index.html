@@ -327,6 +327,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <div style="grid-column:1/-1">
  <label>Materiales utilizados</label>
  <div id="materialsList"></div>
+ <input type="hidden" id="materials" value="0">
  <button class="btn secondary" type="button" onclick="addMaterial()">
   ＋ Agregar material
  </button>
@@ -708,27 +709,22 @@ function renderJobs(){
  </div>`).join(''):'<p class="muted">No hay trabajos en este mes.</p>';
  renderHome();
 }
+
 function resetJobForm(){
- $('jobForm').reset();$('editNum').value='';
- $('date').value=today();$('materials').value=0;
- $('transport').value=0;$('other').value=0;$('labor').value=0;
- $('status').value='Pendiente';$('saveBtn').textContent='Guardar trabajo';
-}
-$('jobForm').addEventListener('submit',e=>{
- e.preventDefault();
- let num=$('editNum').value||String(Date.now());
- let previous=jobs.find(x=>String(x.num)===String(num));
- let j={
- num,date:$('date').value,client:$('client').value.trim(),
- address:$('address').value.trim(),description:$('description').value.trim(),
- income:val('income'),materials:val('materials'),transport:val('transport'),
- other:val('other'),labor:val('labor'),status:$('status').value
- };
- let i=jobs.findIndex(x=>String(x.num)===String(num));
- if(i>=0)jobs[i]=j;else jobs.push(j);
- saveJobs();resetJobForm();renderJobs();
- alert('Trabajo guardado correctamente.');
-});
+ $('jobForm').reset();
+ $('editNum').value='';
+ $('date').value=today();
+
+ currentMaterials=[];
+ renderMaterials();
+
+ $('transport').value=0;
+ $('other').value=0;
+ $('labor').value=0;
+ $('status').value='Pendiente';
+ $('saveBtn').textContent='Guardar trabajo';
+ }
+   
 function editJob(num){
  let j=jobs.find(x=>String(x.num)===String(num));if(!j)return;
  ['date','client','address','income','materials','transport','other','labor','description'].forEach(k=>$(k).value=j[k]??'');
