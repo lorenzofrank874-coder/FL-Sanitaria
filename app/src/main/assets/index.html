@@ -595,6 +595,9 @@ function renderHome(){
  
 function generateMonthlyReport(){
  let k=$('homeMonth').value;
+
+function generateMonthlyReport(){
+ let k=$('homeMonth').value;
  let list=jobs.filter(j=>monthKey(j.date)===k);
 
  if(!list.length){
@@ -608,24 +611,73 @@ function generateMonthlyReport(){
  let other=list.reduce((a,j)=>a+(Number(j.other)||0),0);
  let labor=list.reduce((a,j)=>a+(Number(j.labor)||0),0);
 
- let rows=list.map(j=>`
-  <tr>
-   <td>${esc(j.date||'')}</td>
-   <td>${esc(j.client||'')}</td>
-   <td>${esc(j.description||j.detail||'')}</td>
-   <td>${money(Number(j.income)||0)}</td>
-   <td>${money(Number(j.materials)||0)}</td>
-   <td>${money(Number(j.transport)||0)}</td>
-   <td>${money(Number(j.other)||0)}</td>
-   <td>${esc(j.status||'')}</td>
-  </tr>
- `).join('');
+ let rows=list.map(j=>{
+
+  let materialList=Array.isArray(j.materialsList)
+   ?j.materialsList
+   :[];
+
+  // Compatibilidad con trabajos anteriores
+  if(materialList.length===0 && Number(j.materials)>0){
+   materialList=[{
+    name:'Materiales (registro anterior)',
+    quantity:1,
+    price:Number(j.materials)
+   }];
+  }
+
+  let materialRows=materialList.map(m=>`
+   <tr>
+    <td>${esc(m.name||'Sin descripción')}</td>
+    <td style="text-align:center">${m.quantity}</td>
+    <td style="text-align:right">${money(m.price)}</td>
+    <td style="text-align:right">${money(m.quantity*m.price)}</td>
+   </tr>
+  `).join('');
+
+  return `
+   <tr>
+    <td>${esc(j.date||'')}</td>
+    <td>${esc(j.client||'')}</td>
+    <td>${esc(j.description||j.detail||'')}</td>
+    <td>${money(j.income)}</td>
+    <td>${money(j.materials)}</td>
+    <td>${money(j.transport)}</td>
+    <td>${money(j.other)}</td>
+    <td>${esc(j.status||'')}</td>
+   </tr>
+
+   <tr>
+    <td colspan="8" style="padding:8px;background:#f1f5f8">
+     <b>Detalle de materiales:</b>
+     <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:6px">
+      <thead>
+       <tr>
+        <th style="text-align:left">Material</th>
+        <th>Cantidad</th>
+        <th style="text-align:right">Precio unitario</th>
+        <th style="text-align:right">Subtotal</th>
+       </tr>
+      </thead>
+      <tbody>
+       ${materialRows||'<tr><td colspan="4">Sin materiales registrados</td></tr>'}
+      </tbody>
+     </table>
+     <p style="text-align:right;margin-bottom:0">
+      <b>Total materiales: ${money(j.materials)}</b>
+     </p>
+    </td>
+   </tr>
+  `;
+ }).join('');
 
  let area=$('printArea');
+
  area.innerHTML=`
   <div class="receipt" style="padding:20px;color:#203548">
    <h1 style="color:#176D9B">FL Sanitaria</h1>
    <h2>Informe mensual de trabajos</h2>
+
    <p><b>Período:</b> ${monthLabel(k)}</p>
    <p><b>Fecha del informe:</b> ${today()}</p>
 
@@ -642,16 +694,23 @@ function generateMonthlyReport(){
    <p>Mano de obra registrada: ${money(labor)}</p>
 
    <h3>Detalle de trabajos</h3>
-   <table style="width:100%;border-collapse:collapse;font-size:11px">
+
+   <table style="width:100%;border-collapse:collapse;font-size:10px">
     <thead>
      <tr>
-      <th>Fecha</th><th>Cliente</th><th>Trabajo</th>
-      <th>Ingreso</th><th>Materiales</th>
-      <th>Transporte</th><th>Otros</th><th>Estado</th>
+      <th>Fecha</th>
+      <th>Cliente</th>
+      <th>Trabajo</th>
+      <th>Ingreso</th>
+      <th>Materiales</th>
+      <th>Transporte</th>
+      <th>Otros</th>
+      <th>Estado</th>
      </tr>
     </thead>
     <tbody>${rows}</tbody>
    </table>
+
    <p style="margin-top:25px;text-align:center">
     FL Sanitaria — Informe de gestión mensual
    </p>
@@ -662,6 +721,7 @@ function generateMonthlyReport(){
  window.print();
  area.classList.add('hidden');
  }
+ 
  
 function fillMonths(){
  let keys=[...new Set(jobs.map(j=>monthKey(j.date)).filter(Boolean))].sort().reverse();
@@ -796,22 +856,78 @@ function deleteJob(num){
  saveJobs();renderJobs();
 }
 function receipt(num,type){
- let j=jobs.find(x=>String(x.num)===String(num));if(!j)return;
- let details=type==='detail'?`
- <p>Materiales: ${money(j.materials)}</p>
- <p>Transporte: ${money(j.transport)}</p>
- <p>Otros gastos: ${money(j.other)}</p>`:'';
- $('printArea').innerHTML=`<div style="font-family:Arial;padding:22px;color:#123">
- <h2>FL SANITARIA</h2><h3>Comprobante de trabajo</h3>
- <p><b>Fecha:</b> ${esc(j.date)}</p>
- <p><b>Cliente:</b> ${esc(j.client||'')}</p>
- <p><b>Dirección:</b> ${esc(j.address||'')}</p>
- <p><b>Descripción:</b> ${esc(j.description||'')}</p>
- ${details}<hr><h2>Total: ${money(j.income)}</h2></div>`;
+ let j=jobs.find(x=>String(x.num)===String(num));
+ if(!j)return;
+
+ let details='';
+
+ if(type==='detail'){
+
+  let materials=Array.isArray(j.materialsList)
+   ?j.materialsList
+   :[];
+
+  // Compatibilidad con trabajos anteriores
+  if(materials.length===0 && Number(j.materials)>0){
+   materials=[{
+    name:'Materiales (registro anterior)',
+    quantity:1,
+    price:Number(j.materials)
+   }];
+  }
+
+  let materialRows=materials.map(m=>`
+   <tr>
+    <td>${esc(m.name)}</td>
+    <td style="text-align:center">${m.quantity}</td>
+    <td style="text-align:right">${money(m.price)}</td>
+    <td style="text-align:right">${money(m.quantity*m.price)}</td>
+   </tr>
+  `).join('');
+
+  details=`
+   <h3>Detalle de materiales</h3>
+   <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead>
+     <tr>
+      <th style="text-align:left">Material</th>
+      <th>Cantidad</th>
+      <th style="text-align:right">Precio unitario</th>
+      <th style="text-align:right">Subtotal</th>
+     </tr>
+    </thead>
+    <tbody>
+     ${materialRows || '<tr><td colspan="4">Sin materiales registrados</td></tr>'}
+    </tbody>
+   </table>
+
+   <p><b>Total materiales:</b> ${money(j.materials)}</p>
+   <p><b>Transporte:</b> ${money(j.transport)}</p>
+   <p><b>Otros gastos:</b> ${money(j.other)}</p>
+  `;
+ }
+
+ $('printArea').innerHTML=`
+  <div style="font-family:Arial;padding:22px;color:#123">
+   <h2>FL SANITARIA</h2>
+   <h3>Comprobante de trabajo</h3>
+
+   <p><b>Fecha:</b> ${esc(j.date||'')}</p>
+   <p><b>Cliente:</b> ${esc(j.client||'')}</p>
+   <p><b>Dirección:</b> ${esc(j.address||'')}</p>
+   <p><b>Descripción:</b> ${esc(j.description||'')}</p>
+
+   ${details}
+
+   <hr>
+   <h2>Total: ${money(j.income)}</h2>
+  </div>
+ `;
+
  $('printArea').classList.remove('hidden');
  window.print();
  $('printArea').classList.add('hidden');
-}
+ }
 
 // HERRAMIENTAS
 function resetToolForm(){
@@ -866,14 +982,54 @@ function download(content,name,type){
  a.href=u;a.download=name;a.click();
  setTimeout(()=>URL.revokeObjectURL(u),1000);
 }
+
 function exportCSV(){
  let rows=[
- ['Fecha','Cliente','Direccion','Descripcion','Ingreso','Materiales','Transporte','Otros','Mano de obra','Gastos','Ganancia neta','Estado'],
- ...jobs.map(j=>[j.date,j.client,j.address,j.description,j.income,j.materials,j.transport,j.other,j.labor,costs(j),net(j),j.status||'Pendiente'])
+  ['Fecha','Cliente','Direccion','Descripcion','Ingreso','Materiales','Detalle de materiales','Transporte','Otros','Mano de obra','Gastos','Ganancia neta','Estado'],
+  ...jobs.map(j=>{
+
+   let materialList=Array.isArray(j.materialsList)
+    ?j.materialsList
+    :[];
+
+   // Compatibilidad con trabajos anteriores
+   if(materialList.length===0 && Number(j.materials)>0){
+    materialList=[{
+     name:'Materiales (registro anterior)',
+     quantity:1,
+     price:Number(j.materials)
+    }];
+   }
+
+   let materialDetail=materialList.map(m=>
+    `${m.name} | Cantidad: ${m.quantity} | Unitario: ${m.price} | Subtotal: ${m.quantity*m.price}`
+   ).join(' / ');
+
+   return[
+    j.date,
+    j.client,
+    j.address,
+    j.description,
+    j.income,
+    j.materials,
+    materialDetail,
+    j.transport,
+    j.other,
+    j.labor,
+    costs(j),
+    net(j),
+    j.status||'Pendiente'
+   ];
+  })
  ];
- let csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+
+ let csv=rows.map(r=>
+  r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')
+ ).join('\n');
+
  download('\ufeff'+csv,'FL_Sanitaria_trabajos.csv','text/csv;charset=utf-8');
-}
+ }
+ 
   
 function backup(){
  const data={
