@@ -140,14 +140,58 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <!-- INICIO -->
 <section id="home">
  <div class="panel">
-  <h2>Resumen del mes actual</h2>
-  <div class="grid">
-   <div class="metric income"><small>INGRESOS</small><strong id="homeIncome">$ 0</strong></div>
-   <div class="metric expense"><small>GASTOS</small><strong id="homeExpenses">$ 0</strong></div>
-   <div class="metric profit"><small>GANANCIA NETA</small><strong id="homeProfit">$ 0</strong></div>
-   <div class="metric jobs"><small>TRABAJOS REALIZADOS</small><strong id="homeCount">0</strong></div>
+  
+<div class="panel">
+  <h2>Resumen financiero mensual</h2>
+  <label for="homeMonth">Seleccionar mes</label>
+  <select id="homeMonth" onchange="renderHome()"></select>
+
+  <div class="grid" style="margin-top:12px">
+    <div class="metric income">
+      <small>INGRESOS TOTALES</small>
+      <strong id="homeIncome">$ 0</strong>
+    </div>
+    <div class="metric expense">
+      <small>GASTOS TOTALES</small>
+      <strong id="homeExpenses">$ 0</strong>
+    </div>
+    <div class="metric profit">
+      <small>GANANCIA NETA</small>
+      <strong id="homeProfit">$ 0</strong>
+    </div>
+    <div class="metric jobs">
+      <small>TRABAJOS REALIZADOS</small>
+      <strong id="homeCount">0</strong>
+    </div>
   </div>
- </div>
+
+  <hr>
+  <h3>Desglose de gastos</h3>
+  <div class="grid">
+    <div class="metric">
+      <small>MATERIALES</small>
+      <strong id="homeMaterials">$ 0</strong>
+    </div>
+    <div class="metric">
+      <small>TRANSPORTE</small>
+      <strong id="homeTransport">$ 0</strong>
+    </div>
+    <div class="metric">
+      <small>OTROS GASTOS</small>
+      <strong id="homeOther">$ 0</strong>
+    </div>
+    <div class="metric">
+      <small>MES ANTERIOR</small>
+      <strong id="homePreviousProfit">$ 0</strong>
+    </div>
+  </div>
+
+  <p id="homeComparison" class="note"></p>
+  <button class="btn secondary" onclick="generateMonthlyReport()">
+    Generar informe mensual
+  </button>
+</div>
+  
  <div class="panel">
   <h2>Finanzas del mes</h2>
   <div class="chartrow"><span>Ingresos</span><div class="track"><div id="barIncome" class="bar income"></div></div><b id="chartIncome">$ 0</b></div>
@@ -301,23 +345,136 @@ function sum(list){
  profit:a.profit+net(j)
  }),{income:0,expenses:0,profit:0});
 }
+
+function fillHomeMonths(){
+ let keys=[...new Set(jobs.map(j=>monthKey(j.date)).filter(Boolean))];
+ let current=today().slice(0,7);
+ if(!keys.includes(current))keys.push(current);
+ keys.sort().reverse();
+
+ let old=$('homeMonth').value;
+ $('homeMonth').innerHTML=keys.map(k=>
+  `<option value="${k}">${monthLabel(k)}</option>`
+ ).join('');
+
+ $('homeMonth').value=keys.includes(old)?old:current;
+}
+
 function renderHome(){
- let k=today().slice(0,7);
+ fillHomeMonths();
+
+ let k=$('homeMonth').value;
  let list=jobs.filter(j=>monthKey(j.date)===k);
  let s=sum(list);
- let max=Math.max(s.income,s.expenses,Math.max(0,s.profit),1);
+
+ let materials=list.reduce((a,j)=>a+(Number(j.materials)||0),0);
+ let transport=list.reduce((a,j)=>a+(Number(j.transport)||0),0);
+ let other=list.reduce((a,j)=>a+(Number(j.other)||0),0);
+
+ let [year,month]=k.split('-').map(Number);
+ let previousDate=new Date(year,month-2,1);
+ let previousKey=previousDate.getFullYear()+'-'+
+  String(previousDate.getMonth()+1).padStart(2,'0');
+
+ let previousJobs=jobs.filter(j=>monthKey(j.date)===previousKey);
+ let previousProfit=sum(previousJobs).profit;
+ let difference=s.profit-previousProfit;
+
  $('homeIncome').textContent=money(s.income);
  $('homeExpenses').textContent=money(s.expenses);
  $('homeProfit').textContent=money(s.profit);
  $('homeCount').textContent=list.length;
- let paid=list.filter(j=>j.status==='Cobrado').length;
- $('homePaid').textContent=paid;
- $('homePending').textContent=list.length-paid;
+ $('homeMaterials').textContent=money(materials);
+ $('homeTransport').textContent=money(transport);
+ $('homeOther').textContent=money(other);
+ $('homePreviousProfit').textContent=money(previousProfit);
+
+ $('homeComparison').textContent=
+  difference>0?'Ganancia superior al mes anterior por '+money(difference):
+  difference<0?'Ganancia inferior al mes anterior por '+money(Math.abs(difference)):
+  'La ganancia se mantiene igual que el mes anterior.';
+
+ $('homePaid').textContent=list.filter(j=>j.status==='Cobrado').length;
+ $('homePending').textContent=list.filter(j=>j.status!=='Cobrado').length;
+
+ let max=Math.max(s.income,s.expenses,Math.max(0,s.profit),1);
+
  [['Income',s.income],['Expenses',s.expenses],['Profit',Math.max(0,s.profit)]].forEach(([n,v])=>{
   $('bar'+n).style.width=(Math.max(0,v)/max*100)+'%';
   $('chart'+n).textContent=money(v);
  });
-}
+ }
+ 
+function generateMonthlyReport(){
+ let k=$('homeMonth').value;
+ let list=jobs.filter(j=>monthKey(j.date)===k);
+
+ if(!list.length){
+  alert('No hay trabajos registrados en este mes.');
+  return;
+ }
+
+ let s=sum(list);
+ let materials=list.reduce((a,j)=>a+(Number(j.materials)||0),0);
+ let transport=list.reduce((a,j)=>a+(Number(j.transport)||0),0);
+ let other=list.reduce((a,j)=>a+(Number(j.other)||0),0);
+ let labor=list.reduce((a,j)=>a+(Number(j.labor)||0),0);
+
+ let rows=list.map(j=>`
+  <tr>
+   <td>${esc(j.date||'')}</td>
+   <td>${esc(j.client||'')}</td>
+   <td>${esc(j.description||j.detail||'')}</td>
+   <td>${money(Number(j.income)||0)}</td>
+   <td>${money(Number(j.materials)||0)}</td>
+   <td>${money(Number(j.transport)||0)}</td>
+   <td>${money(Number(j.other)||0)}</td>
+   <td>${esc(j.status||'')}</td>
+  </tr>
+ `).join('');
+
+ let area=$('printArea');
+ area.innerHTML=`
+  <div class="receipt" style="padding:20px;color:#203548">
+   <h1 style="color:#176D9B">FL Sanitaria</h1>
+   <h2>Informe mensual de trabajos</h2>
+   <p><b>Período:</b> ${monthLabel(k)}</p>
+   <p><b>Fecha del informe:</b> ${today()}</p>
+
+   <h3>Resumen financiero</h3>
+   <p>Ingresos: <b>${money(s.income)}</b></p>
+   <p>Gastos totales: <b>${money(s.expenses)}</b></p>
+   <p>Ganancia neta: <b>${money(s.profit)}</b></p>
+   <p>Trabajos realizados: <b>${list.length}</b></p>
+
+   <h3>Desglose de gastos</h3>
+   <p>Materiales: ${money(materials)}</p>
+   <p>Transporte: ${money(transport)}</p>
+   <p>Otros gastos: ${money(other)}</p>
+   <p>Mano de obra registrada: ${money(labor)}</p>
+
+   <h3>Detalle de trabajos</h3>
+   <table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead>
+     <tr>
+      <th>Fecha</th><th>Cliente</th><th>Trabajo</th>
+      <th>Ingreso</th><th>Materiales</th>
+      <th>Transporte</th><th>Otros</th><th>Estado</th>
+     </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+   </table>
+   <p style="margin-top:25px;text-align:center">
+    FL Sanitaria — Informe de gestión mensual
+   </p>
+  </div>
+ `;
+
+ area.classList.remove('hidden');
+ window.print();
+ area.classList.add('hidden');
+ }
+ 
 function fillMonths(){
  let keys=[...new Set(jobs.map(j=>monthKey(j.date)).filter(Boolean))].sort().reverse();
  let current=today().slice(0,7);
