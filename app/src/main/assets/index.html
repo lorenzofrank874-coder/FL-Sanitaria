@@ -724,12 +724,65 @@ function resetJobForm(){
  $('status').value='Pendiente';
  $('saveBtn').textContent='Guardar trabajo';
  }
+ $('jobForm').addEventListener('submit',e=>{
+ e.preventDefault();
+
+ let num=$('editNum').value||String(Date.now());
+
+ let j={
+  num,
+  date:$('date').value,
+  client:$('client').value.trim(),
+  address:$('address').value.trim(),
+  description:$('description').value.trim(),
+  income:val('income'),
+  materials:val('materials'),
+  materialsList:currentMaterials.map(m=>({...m})),
+  transport:val('transport'),
+  other:val('other'),
+  labor:val('labor'),
+  status:$('status').value
+ };
+
+ let i=jobs.findIndex(x=>String(x.num)===String(num));
+
+ if(i>=0)jobs[i]=j;
+ else jobs.push(j);
+
+ saveJobs();
+ resetJobForm();
+ renderJobs();
+
+ alert('Trabajo guardado correctamente.');
+});
    
 function editJob(num){
- let j=jobs.find(x=>String(x.num)===String(num));if(!j)return;
- ['date','client','address','income','materials','transport','other','labor','description'].forEach(k=>$(k).value=j[k]??'');
+ let j=jobs.find(x=>String(x.num)===String(num));
+ if(!j)return;
+
+ ['date','client','address','income','transport','other','labor','description']
+ .forEach(k=>$(k).value=j[k]??'');
+
+ currentMaterials=Array.isArray(j.materialsList)
+  ?j.materialsList.map(m=>({...m}))
+  :[];
+
+ // Compatibilidad con trabajos anteriores
+ if(currentMaterials.length===0 && Number(j.materials)>0){
+  currentMaterials.push({
+   id:String(Date.now()),
+   name:'Materiales (registro anterior)',
+   quantity:1,
+   price:Number(j.materials)
+  });
+ }
+
+ renderMaterials();
+
  $('status').value=j.status||'Pendiente';
- $('editNum').value=j.num;$('saveBtn').textContent='Guardar cambios';
+ $('editNum').value=j.num;
+ $('saveBtn').textContent='Guardar cambios';
+
  window.scrollTo({top:0,behavior:'smooth'});
 }
 function changeStatus(num){
