@@ -414,7 +414,71 @@ function exportCSV(){
  let csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
  download('\ufeff'+csv,'FL_Sanitaria_trabajos.csv','text/csv;charset=utf-8');
 }
-  function backup(){
+  
+function backup(){
  const data={
   app:'FL Sanitaria',
-  vers
+  version:1,
+  exportedAt:new Date().toISOString(),
+  jobs:jobs,
+  tools:tools
+ };
+ download(
+  JSON.stringify(data,null,2),
+  'FL_Sanitaria_respaldo.json',
+  'application/json'
+ );
+}
+
+function restore(event){
+ const file=event.target.files[0];
+ if(!file)return;
+
+ const reader=new FileReader();
+
+ reader.onload=function(){
+  try{
+   const data=JSON.parse(reader.result);
+
+   if(
+    data.app!=='FL Sanitaria' ||
+    !Array.isArray(data.jobs) ||
+    !Array.isArray(data.tools)
+   ){
+    throw new Error('Archivo de respaldo no válido');
+   }
+
+   if(!confirm('¿Restaurar los datos? Se reemplazarán los registros actuales.'))return;
+
+   jobs=data.jobs;
+   tools=data.tools;
+
+   saveJobs();
+   saveTools();
+
+   resetJobForm();
+   resetToolForm();
+   renderHome();
+   renderJobs();
+   renderTools();
+
+   alert('Respaldo restaurado correctamente.');
+  }catch(error){
+   alert('No se pudo restaurar el archivo. Comprueba que sea una copia válida de FL Sanitaria.');
+  }finally{
+   event.target.value='';
+  }
+ };
+
+ reader.readAsText(file);
+}
+
+$('date').value=today();
+renderHome();
+fillMonths();
+renderJobs();
+renderTools();
+
+</script>
+</body>
+</html>
