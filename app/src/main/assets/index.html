@@ -23,7 +23,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
 header{
- background:linear-gradient(135deg,#082b45 0%,#087ca5 65%,#159b72 100%);
+ background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 60%,var(--purple) 100%);
  color:white;
  padding:22px 18px;
  border-radius:0 0 24px 24px;
@@ -141,7 +141,6 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 <section id="home">
  <div class="panel">
   
-<div class="panel">
   <h2>Resumen financiero mensual</h2>
   <label for="homeMonth">Seleccionar mes</label>
   <select id="homeMonth" onchange="renderHome()"></select>
